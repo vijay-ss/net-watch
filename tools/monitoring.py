@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from colorama import Fore, Style
 from datetime import datetime
-from scapy.all import *
+import scapy.all as scapy
 from scapy.layers.dns import DNS
 from scapy.layers.inet import UDP, IP, TCP
 from mac_vendor_lookup import MacLookup, VendorNotFoundError
@@ -17,7 +17,7 @@ class DnsListener:
     
     def listen(self) -> None:
         if self.interface:
-            sniff(iface=self.interface, prn=self.process_packet, filter="udp port 53 or tcp port 53", store=0)
+            scapy.sniff(iface=self.interface, prn=self.process_packet, filter="udp port 53 or tcp port 53", store=0)
     
     def process_packet(self, pkt) -> None:
         if self.filter_src_ip and IP in pkt and pkt[IP].src != self.filter_src_ip:
@@ -54,7 +54,7 @@ class DnsListener:
         self.print_packet(pkt_dict)
 
         if self.output_pcap_file:
-            wrpcap(self.output_pcap_file, pkt, append=True)
+            self.save_output_pcap_file(pkt)
     
     def print_packet(self, packet: dict) -> None:
         for k, v in packet.items():
@@ -69,7 +69,7 @@ class DnsListener:
     
     def save_output_pcap_file(self, pkt) -> None:
         try:
-            wrpcap(self.output_pcap_file, pkt, append=True)
+            scapy.wrpcap(self.output_pcap_file, pkt, append=True)
         except Exception as error:
             logging.exception(error)
 
